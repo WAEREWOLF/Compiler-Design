@@ -1,0 +1,10 @@
+<HTML>
+     <HEAD>This is a head example!</HEAD>
+     <body bgcolor="red">
+          <AREA shape="circle">This is Area circle shape!</AREA>
+          <HR>First hr tag</HR>
+          <AREA shape="rectangle">This is Area rectangle shape!</AREA>
+          <AREA shape="square">This is Area square shape!</AREA>
+          <HR>Second hr tag</HR>
+     </body>
+</HTML>

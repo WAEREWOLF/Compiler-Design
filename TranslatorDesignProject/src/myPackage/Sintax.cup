@@ -1,0 +1,416 @@
+package myPackage;
+import myPackage.Node;
+import java_cup.runtime.Symbol;
+
+parser code
+{:
+    private Symbol s;
+    public SymbolsTable symTable = new SymbolsTable();
+    public Node root = null;
+    
+    public void syntax_error(Symbol s){
+        this.s = s;
+    }
+
+    public Symbol getS(){
+        return this.s;
+    }
+    
+
+:};
+
+/* Terminal symbols */
+terminal ERROR, SIZE_ATTR_HR, WIDTH_ATTR_HR, CONTENT, BigOpen, BigClose, BdoOpen, BdoClose,
+        BaseFontOpen, BaseFontClose, BodyOpen, BodyClose, DivOpen, DivClose, HrOpen, HrClose,
+        AOpen, AClose, AbbrOpen, AbbrClose, AcronymOpen, AcronymClose, AddressOpen, AddressClose,
+        AreaOpen, AreaClose, BrOpen, BrClose, BUTTONOpen, BUTTONClose, CaptionOpen, CaptionClose,
+        CenterOpen, CenterClose, CiteOpen, CiteClose, CodeOpen, CodeClose, ColOpen, ColClose,
+        ColgroupOpen, ColgroupClose, DdOpen, DdClose, DelOpen, DelClose, DfnOpen, DfnClose, BOpen,
+        BClose, BaseOpen, BaseClose, DirOpen, DirClose, DlOpen, DlClose, DtOpen, DtClose, EmOpen,
+        EmClose, FieldsetOpen, FieldsetClose, FontOpen, FontClose, FormOpen, FormClose, FrameOpen,
+        FrameClose, FramesetOpen, FramesetClose, HeadOpen, HeadClose, HnOpen, HnClose, HtmlOpen,
+        HtmlClose, ImgOpen, ImgClose, InputOpen, InputClose, InsOpen, InsClose, KbdOpen, KbdClose,
+        LabelOpen, LabelClose,LineTerminator,EndOpenedTag,
+        NAME_ATTR, REL_ATTR, REV_ATTR, TITLE_ATTR, SHAPE_ATTR,
+        COORDS_ATTR, HREF_URL_ATTR, ALT_ATTR, NOHREF_ATTR, BLOCKQUOTEOpen, BLOCKQUOTEClose, BGCOLOR_ATTR,
+        BACKGROUND_ATTR, TEXT_ATTR, LINK_ATTR, VLINK_ATTR, ALINK_ATTR, COMPACT_ATTR, ALIGN_ATTR, COLOR_ATTR,
+        ACTION_ATTR, METHOD_ATTR, ENCTYPE_ATTR, SRC_ATTR, HEIGHT_ATTR, HSPACE_ATTR, VSPACE_ATTR, BORDER_ATTR,
+        USEMAP_ATTR, TYPE_ATTR, VALUE_ATTR, MAXLEN_ATTR, CHECKED_ATTR;
+
+
+
+/* Non Terminal symbols */
+non terminal BIG_TAG, BDO_TAG, ERROR_S, INIT, BASEFONT_T, BASEFONT_A,
+            BODY_T, BODY_A, DIV_T, DIV_A, HR_T, HR_A, A_T, A_AT, ABBR_T, ACRONYM_T,
+            ADDRESS_T, AREA_T, AREA_A, BR_T, BUTTON_T, CAPTION_T, CENTER_T, CITE_T, CODE_T, COL_T, COLGROUP_T, 
+            DD_T, DEL_T, DFN_T, B_T, BASE_T, BASE_A, DIR_T, DIR_A, DL_T, DL_A,
+            DT_T, EM_T, FIELDSET_T, FONT_T, FONT_A, FORM_T, FORM_A, FRAME_T,            
+            FRAMESET_T, HEAD_T, HN_T, HN_A, HTML_T, IMG_T, IMG_A,
+            INPUT_T, INPUT_A, INS_T, KBD_T, LABEL_T, BLOCKQUOTE_T, BODY_CONTENT, BODY_CONTENT_LIST, BODY_A_LIST, HTML_CONTENT, HTML_CONTENT_LIST;
+
+precedence left HrOpen, AddressOpen, AreaOpen, DelOpen, LineTerminator;
+start with HTML_T;
+
+INIT ::=
+    BIG_TAG | BDO_TAG | ERROR_S | 
+    BASEFONT_T | BODY_T | DIV_T | HR_T | A_T | ABBR_T | ACRONYM_T |
+    ADDRESS_T | AREA_T | BR_T | BUTTON_T | CAPTION_T | CENTER_T | CITE_T | 
+    CODE_T | COL_T | COLGROUP_T | DD_T | DEL_T | DFN_T | B_T | BASE_T | DIR_T |
+    DL_T | DT_T | EM_T | FIELDSET_T | FONT_T | FORM_T | FRAME_T |            
+    FRAMESET_T | HEAD_T | HN_T | HTML_T | IMG_T |
+    INPUT_T | INS_T | KBD_T | LABEL_T | BLOCKQUOTE_T
+; 
+
+// BIG
+BIG_TAG ::= 
+    BigOpen CONTENT BigClose
+;
+
+// BDO
+BDO_TAG ::=
+    BdoOpen CONTENT BdoClose 
+;
+
+// ERROR
+ERROR_S ::=
+    ERROR
+;
+
+// BASEFONT
+BASEFONT_T ::=
+    BaseFontOpen CONTENT BaseFontClose |
+    BaseFontOpen BASEFONT_A CONTENT BaseFontClose
+;
+BASEFONT_A ::=
+    SIZE_ATTR_HR
+;
+
+BODY_A ::=
+      BGCOLOR_ATTR: bg {: RESULT = Node.createBgcolorAttr(""); :} 
+    | BACKGROUND_ATTR: bck {: RESULT = Node.createBackgroundAttr(""); :} 
+    | TEXT_ATTR: txt {: RESULT = Node.createTextAttr(""); :} 
+    | LINK_ATTR: lk {: RESULT = Node.createLinkAttr(""); :} 
+    | VLINK_ATTR: vl {: RESULT = Node.createVlinkAttr(""); :} 
+   // | ALINK_ATTR: al {: RESULT = Node.createAlinkAttr(al.data); :} 
+;
+
+/*
+BODY_A_LIST ::=
+      BODY_A: ba {: RESULT = Node.createBodyAttrList((Node)ba); :}
+    | BODY_A_LIST: bal BODY_A: ba {: RESULT = Node.addToBodyAttrList((Node)bal, (Node)RESULT); :} //??
+    |
+;*/
+
+// BODY
+// add list
+BODY_T ::=
+      BodyOpen LineTerminator BODY_A: bal EndOpenedTag BODY_CONTENT_LIST: bco BodyClose {: RESULT = Node.createBodyNode((Node)bco); parser.symTable.addSymbolsToTable("BODY"); :}
+    | BodyOpen LineTerminator BODY_A: bal EndOpenedTag BODY_CONTENT_LIST: bco LineTerminator BodyClose {: RESULT = Node.createBodyNode((Node)bco); parser.symTable.addSymbolsToTable("BODY");:}
+    /*| BodyOpen EndOpenedTag BODY_CONTENT: bco BodyClose {: RESULT = createBodyNode((Node)bco); :}
+    | BodyOpen LineTerminator BODY_A BodyClose {: RESULT = createBodyNode(new Node("","")); :}
+    | BodyOpen LineTerminator BODY_CONTENT BodyClose {: RESULT = createBodyNode((Node)bco); :}
+    | LineTerminator BodyOpen EndOpenedTag BODY_CONTENT BodyClose {: RESULT = createBodyNode((Node)bco); :}
+    | LineTerminator BodyOpen LineTerminator BODY_A BodyClose {: RESULT = createBodyNode((Node)bco); :}
+    | LineTerminator BodyOpen LineTerminator BODY_CONTENT BodyClose {: RESULT = createBodyNode((Node)bco); :}*/
+;
+
+BODY_CONTENT_LIST ::=
+      BODY_CONTENT: bc {: RESULT = Node.createBodyContentList((Node)bc); :}
+    | BODY_CONTENT_LIST: bcl BODY_CONTENT: bc {: RESULT = Node.addToBodyContentList((Node)bcl, (Node)bc); :} /*Trebuie adaugat la nodul creat sus copii*/
+    |
+;
+
+// BODY CONTENT
+BODY_CONTENT ::=
+      AREA_T: ar {: RESULT = Node.createAreaNode(""); :}
+    | HR_T: hr {: RESULT = Node.createHrNode(""); :}
+    | DEL_T: del {: RESULT = Node.createDelNode(""); :}
+    | ADDRESS_T: adr {: RESULT = Node.createAddressNode(""); :}
+  /*  | AREA_T: ar HR_T: hr {: RESULT = Node.createHrAreaNode((Node)ar, (Node)hr); :} // ??
+    | AREA_T ADDRESS_T HR_T {: RESULT = createBodyContentNode(ar, null, null, adr); :}
+    | AREA_T ADDRESS_T HR_T DEL_T {: RESULT = createBodyContentNode(ar, hr, del, adr); :}
+   */
+;
+
+// DIV
+DIV_T ::=
+    DivOpen CONTENT DivClose |
+    DivOpen DIV_A CONTENT DivClose
+;
+DIV_A ::=
+    ALIGN_ATTR
+;
+
+// HR
+HR_T ::=
+      HrOpen CONTENT: con HrClose {: RESULT = Node.createHrNode(""); parser.symTable.addSymbolsToTable("HR");:}
+    | HrOpen HR_A CONTENT: con HrClose {: RESULT = Node.createHrNode(""); parser.symTable.addSymbolsToTable("HR");:}     
+;
+HR_A ::=
+      ALIGN_ATTR: al {: RESULT = Node.createAlignAttr(""); :}
+    | SIZE_ATTR_HR: sa {: RESULT = Node.createSizeAttr(""); :}
+    | WIDTH_ATTR_HR: wa {: RESULT = Node.createWidthAttr(""); :}
+;
+
+// A
+A_T ::=
+   AOpen CONTENT AClose |
+   AOpen A_AT CONTENT AClose 
+;
+A_AT ::=
+   NAME_ATTR |
+   HREF_URL_ATTR | 
+   REL_ATTR | 
+   REV_ATTR | 
+   TITLE_ATTR 
+;
+
+// ABBR
+ABBR_T ::=
+   AbbrOpen CONTENT AbbrClose 
+;
+
+// ACRONYM
+ACRONYM_T ::=
+   AcronymOpen CONTENT AcronymClose 
+;
+
+// ADDRESS
+ADDRESS_T ::=
+   AddressOpen CONTENT: con  AddressClose {: RESULT = Node.createAddressNode(""); :}
+;
+
+// AREA
+AREA_T ::=   
+   AreaOpen: ao CONTENT AreaClose {: parser.symTable.addSymbolsToTable("AREA"); :}
+   | AreaOpen LineTerminator AREA_A CONTENT AreaClose {: parser.symTable.addSymbolsToTable("AREA"); :}
+   | LineTerminator AreaOpen LineTerminator CONTENT AreaClose {: parser.symTable.addSymbolsToTable("AREA"); :}
+   | LineTerminator AreaOpen LineTerminator AREA_A CONTENT AreaClose LineTerminator {: parser.symTable.addSymbolsToTable("AREA"); :} 
+;
+AREA_A ::=
+   SHAPE_ATTR |
+   COORDS_ATTR |
+   HREF_URL_ATTR |
+   ALT_ATTR |
+   NOHREF_ATTR 
+;
+
+// BR
+BR_T ::=
+    BrOpen CONTENT BrClose 
+;
+
+// BUTTON
+BUTTON_T ::=
+    BUTTONOpen CONTENT BUTTONClose 
+;
+
+// CAPTION
+CAPTION_T ::=
+    CaptionOpen CONTENT CaptionClose 
+;
+
+// CENTER
+CENTER_T ::=
+    CenterOpen CONTENT CenterClose 
+;
+
+// CITE
+CITE_T ::=
+    CiteOpen CONTENT CiteClose 
+;
+
+// BLOCKQUOTE
+BLOCKQUOTE_T ::=
+    BLOCKQUOTEOpen CONTENT BLOCKQUOTEClose 
+;
+
+// CODE
+CODE_T ::=
+    CodeOpen CONTENT CodeClose 
+;
+
+// COL
+COL_T ::=
+    ColOpen CONTENT ColClose 
+;
+
+// COLGROUP
+COLGROUP_T ::=
+    ColgroupOpen CONTENT ColgroupClose 
+;
+
+// DD
+DD_T ::=
+    DdOpen CONTENT DdClose 
+;
+
+// DEL
+DEL_T ::=
+    DelOpen CONTENT: con DelClose {: RESULT = Node.createDelNode(""); :}
+;
+
+// DFN
+DFN_T ::=
+    DfnOpen CONTENT DfnClose 
+;
+
+// B
+B_T ::=
+    BOpen CONTENT BClose 
+;
+
+// DIR
+DIR_T ::=
+    DirOpen CONTENT DirClose |
+    DirOpen DIR_A CONTENT DirClose
+;
+DIR_A ::=
+    COMPACT_ATTR
+;
+
+// DL
+DL_T ::=
+    DlOpen CONTENT DlClose |
+    DlOpen DL_A CONTENT DlClose
+;
+DL_A ::=
+    COMPACT_ATTR
+;
+
+ // BASE
+BASE_T ::=
+    BaseOpen CONTENT BaseClose |
+    BaseOpen BASE_A CONTENT BaseClose
+;
+BASE_A ::=
+    HREF_URL_ATTR
+;
+
+// DT
+DT_T ::=
+    DtOpen CONTENT DtClose 
+;
+
+// EM
+EM_T ::=
+    EmOpen CONTENT EmClose 
+;
+
+// FIELDSET
+FIELDSET_T ::=
+    FieldsetOpen CONTENT FieldsetClose 
+;
+
+ // FONT
+FONT_T ::=
+    FontOpen CONTENT FontClose |
+    FontOpen FONT_A CONTENT FontClose
+;
+FONT_A ::=
+    SIZE_ATTR_HR |
+    COLOR_ATTR
+;
+
+ // FORM
+FORM_T ::=
+    FormOpen CONTENT FormClose |
+    FormOpen FORM_A CONTENT FormClose
+;
+FORM_A ::=
+    ACTION_ATTR |
+    METHOD_ATTR |
+    ENCTYPE_ATTR
+;
+
+// FRAME
+FRAME_T ::=
+    FrameOpen CONTENT FrameClose 
+;
+
+// FRAMESET
+FRAMESET_T ::=
+    FramesetOpen CONTENT FramesetClose 
+;
+
+// HEAD
+HEAD_T ::=
+    HeadOpen CONTENT: con HeadClose LineTerminator {: RESULT = Node.createHeadNode(""); parser.symTable.addSymbolsToTable("HEAD");:}
+;
+
+ // HN
+HN_T ::=
+    HnOpen CONTENT HnClose |
+    HnOpen HN_A CONTENT HnClose
+;
+HN_A ::=
+    ALIGN_ATTR     
+;
+
+// HTML
+// add list
+HTML_T ::=
+      HtmlOpen EndOpenedTag HtmlClose: con HtmlClose {: parser.root = Node.createHtmlNode(new Node("","")); :}    
+    | HtmlOpen EndOpenedTag HTML_CONTENT: hcl HtmlClose {: parser.root = Node.createHtmlNode((Node)hcl); parser.symTable.addSymbolsToTable("HTML"); :}
+    | HtmlOpen LineTerminator EndOpenedTag HTML_CONTENT: hco HtmlClose {: parser.root = Node.createHtmlNode((Node)hco); parser.symTable.addSymbolsToTable("HTML");:}
+;
+
+HTML_CONTENT ::=
+      HEAD_T: hd {: RESULT = Node.createHeadNode(""); :}
+    | BODY_T: bdy {: RESULT = Node.createBodyNode((Node)bdy); :}
+    | HEAD_T: hd BODY_T: bdy {: RESULT = Node.createHtmlContentNode((Node)bdy, (Node)hd); :}  //?? cand trebuie sa creez ambele 
+;
+
+/*
+HTML_CONTENT_LIST ::=
+      HTML_CONTENT: hc {: RESULT = Node.createHtmlContentList((Node)hc); :}
+    | HTML_CONTENT_LIST: hcl HTML_CONTENT: hc {: RESULT = Node.addToHtmlContentList(RESULT, (Node)hcl); :}
+    |
+;*/
+
+ // IMG
+IMG_T ::=
+    ImgOpen CONTENT ImgClose |
+    ImgOpen IMG_A CONTENT ImgClose
+;
+IMG_A ::=
+    ALIGN_ATTR |
+    WIDTH_ATTR_HR |
+    HEIGHT_ATTR |
+    HSPACE_ATTR |
+    VSPACE_ATTR |
+    BORDER_ATTR |
+    USEMAP_ATTR |
+    SRC_ATTR |
+    ALT_ATTR
+;
+
+ // INPUT
+INPUT_T ::=
+    InputOpen CONTENT InputClose |
+    InputOpen INPUT_A CONTENT InputClose
+;
+INPUT_A ::=
+    TYPE_ATTR |
+    VALUE_ATTR |
+    MAXLEN_ATTR |
+    CHECKED_ATTR |
+    NAME_ATTR |
+    SIZE_ATTR_HR
+;
+
+// INS
+INS_T ::=
+    InsOpen CONTENT InsClose 
+;
+
+// KBD
+KBD_T ::=
+    KbdOpen CONTENT KbdClose 
+;
+
+// LABEL
+LABEL_T ::=
+    LabelOpen CONTENT LabelClose 
+;
+    
